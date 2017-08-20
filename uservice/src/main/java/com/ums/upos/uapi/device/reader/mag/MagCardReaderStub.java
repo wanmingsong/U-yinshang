@@ -2,7 +2,6 @@ package com.ums.upos.uapi.device.reader.mag;
 
 import android.os.Bundle;
 import android.os.RemoteException;
-
 import com.socsi.command.magcard.CmdMagcard;
 import com.socsi.exception.SDKException;
 import com.socsi.smartposapi.card.CardReader;
@@ -57,7 +56,8 @@ public class MagCardReaderStub extends MagCardReader.Stub {
                     try {
                         switch (i) {
                             case CardReader.SUCCESS:
-                                CardInfo info = CmdMagcard.getInstance().readTrackUnEncrypt(false);
+//                                CardInfo info = CmdMagcard.getInstance().readTrackUnEncrypt(false);//boolean 是否判断二磁道(银联卡 和会员卡)
+                                CardInfo info = Magcard.getInstance().readUnEncryptTrack();
                                 MagCardInfoEntity entity = new MagCardInfoEntity();
                                 entity.setCardNo(info.getCardNo());
                                 entity.setTk1(info.getTk1());

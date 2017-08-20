@@ -8,7 +8,7 @@ import com.socsi.smartposapi.printer.FontLattice;
 import com.socsi.smartposapi.printer.PrintRespCode;
 import com.socsi.smartposapi.printer.Printer2;
 import com.ums.upos.uapi.ServiceResult;
-
+import static com.ums.upos.uapi.ServiceResult.Success;
 import static com.ums.upos.uapi.ServiceResult.Printer_Base_Error;
 import static com.ums.upos.uapi.ServiceResult.Printer_Busy;
 import static com.ums.upos.uapi.ServiceResult.Printer_NoFontLib;
@@ -18,7 +18,25 @@ import static com.ums.upos.uapi.ServiceResult.Printer_Print_Fail;
 import static com.ums.upos.uapi.ServiceResult.Printre_TooHot;
 
 public class PrinterStub extends Printer.Stub{
-
+	/**
+	 * 单例对象
+	 */
+	private static volatile PrinterStub printerStub;
+	/**
+	 * 获取PrinterStub单例
+	 *
+	 * @return PrinterStub单例
+	 */
+	public static PrinterStub getInstance() {
+		if (printerStub == null) {
+			synchronized (PrinterStub.class) {
+				if (printerStub == null) {
+					printerStub = new PrinterStub();
+				}
+			}
+		}
+		return printerStub;
+	}
 	/**
 	 * 打印机初始化
 	 *
@@ -85,12 +103,12 @@ public class PrinterStub extends Printer.Stub{
 				listener.onPrintResult(-1004);
 				break;
 			case ServiceResult.Printer_PaperLack:
-				listener.onPrintResult(-1005);//没有打印数据？
+				listener.onPrintResult(-1005);//打印机缺纸
 				break;
 			default:
 				break;
 		}
-		return 0;
+		return printerStatus;
 	}
 
 	/**
@@ -182,7 +200,7 @@ public class PrinterStub extends Printer.Stub{
 	 */
 	private int toUnionRespCode(PrintRespCode printRespCode) {
 		if (printRespCode == PrintRespCode.Print_Success) {
-			return 0;
+			return Success;
 		} else if (printRespCode == PrintRespCode.Printer_Busy) {
 			return Printer_Busy;
 		} else if (printRespCode == PrintRespCode.Printer_PaperLack) {

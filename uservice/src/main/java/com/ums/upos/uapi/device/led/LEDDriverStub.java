@@ -12,6 +12,27 @@ import com.socsi.smartposapi.terminal.TerminalManager;
 
 public class LEDDriverStub extends LEDDriver.Stub {
     /**
+     * 单例对象
+     */
+    private static volatile LEDDriverStub ledDriverStub;
+
+    /**
+     * 获取EmvHandlerStub单例
+     *
+     * @return EmvHandlerStub单例
+     */
+    public static LEDDriverStub getInstance() {
+        if (ledDriverStub == null) {
+            synchronized (LEDDriverStub.class) {
+                if (ledDriverStub == null) {
+                    ledDriverStub = new LEDDriverStub();
+                }
+            }
+        }
+        return ledDriverStub;
+    }
+
+    /**
      * LED 灯操作
      *
      * @param light LED 灯操作位(见 LEDLightConstrants 类定义)

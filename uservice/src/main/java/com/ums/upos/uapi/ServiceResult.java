@@ -86,7 +86,7 @@ public class ServiceResult {
      */
     public final static int Scanner_Other_Error = Scanner_Base_Error - 999;
 
-    //---- Modem Error -----
+    //---- Modem Error ----
     public final static int Modem_Base_Error = -3000;
     /**
      * 拨号失败
@@ -256,7 +256,7 @@ public class ServiceResult {
      */
     public final static int SerialPort_Other_Error = SerialPort_Base_Error - 999;
 
-    //---- MagCardReader Error -----
+    //----- MagCardReader Error -----
     public final static int MagCardReader_Base_Error = -5000;
     /**
      * 无刷卡

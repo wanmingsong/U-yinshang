@@ -13,11 +13,31 @@ import com.socsi.smartposapi.terminal.TerminalManager;
  */
 
 public class BeeperStub extends Beeper.Stub {
-
     private Context context;
+
+    /**
+     * 单例对象
+     */
+    private static volatile BeeperStub beeperStub;
 
     public BeeperStub(Context context) {
         this.context = context;
+    }
+    /**
+     * 获取EmvHandlerStub单例
+     *
+     * @param context 上下文
+     * @return EmvHandlerStub单例
+     */
+    public static BeeperStub getInstance(Context context) {
+        if (beeperStub == null) {
+            synchronized (BeeperStub.class) {
+                if (beeperStub == null) {
+                    beeperStub = new BeeperStub(context);
+                }
+            }
+        }
+        return beeperStub;
     }
 
     /**

@@ -12,9 +12,7 @@ public class M1CardHandlerStub extends M1CardHandler.Stub {
     public int authority(int keyType, int blkNo, byte[] pwd, byte[] serialNo) throws RemoteException {
         try {
             MifareDriver.getInstance().certificationWithExternalKey((byte) keyType, serialNo, (byte) blkNo, pwd);
-        } catch (SDKException e) {
-            e.printStackTrace();
-        } catch (MifareDriverException e) {
+        } catch (SDKException | MifareDriverException e) {
             e.printStackTrace();
         }
         return 0;
@@ -24,9 +22,7 @@ public class M1CardHandlerStub extends M1CardHandler.Stub {
     public int readBlock(int blkNo, byte[] blkValue) throws RemoteException {
         try {
             blkValue = MifareDriver.getInstance().read((byte) blkNo);
-        } catch (SDKException e) {
-            e.printStackTrace();
-        } catch (MifareDriverException e) {
+        } catch (SDKException | MifareDriverException e) {
             e.printStackTrace();
         }
         return 0;
@@ -36,9 +32,7 @@ public class M1CardHandlerStub extends M1CardHandler.Stub {
     public int writeBlock(int blkNo, byte[] blkValue) throws RemoteException {
         try {
             MifareDriver.getInstance().write((byte) blkNo, blkValue);
-        } catch (SDKException e) {
-            e.printStackTrace();
-        } catch (MifareDriverException e) {
+        } catch (SDKException | MifareDriverException e) {
             e.printStackTrace();
         }
         return 0;

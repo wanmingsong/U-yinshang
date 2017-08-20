@@ -15,5 +15,5 @@ public class MagCardConstant {
 
     static final int RESULT_PARAM_EORROR = -2;
     static final int RESULT_OVER_TIME = -3;
-    static final int RESULT_SUCC = 1;
+    static final int RESULT_SUCC = 0;
 }

@@ -5,9 +5,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;
+import android.widget.EditText;
 
 import com.blankj.utilcode.utils.AppUtils;
 import com.blankj.utilcode.utils.EmptyUtils;
+import com.blankj.utilcode.utils.KeyboardUtils;
 import com.socsi.exception.SDKException;
 import com.socsi.smartposapi.emv.emvl2.EMVL2;
 import com.socsi.smartposapi.terminal.TerminalManager;
@@ -47,7 +49,6 @@ import com.ums.upos.uapi.network.NetWorkHandlerStub;
  * Created by wangyuan on 17/4/19.
  */
 public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
-
     /**
      * 上下文
      */
@@ -61,12 +62,11 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
     /**
      * 登录设备服务
      *
-     * @param bundle      WorkMode 工作模式 0-传统模式 1-手机支付模式
+     * @param bundle WorkMode 工作模式 0-传统模式 1-手机支付模式
      *                    无 WorkMode 的 Key 值时,默认工作模式为传统模式
      * @param bussinessId 业务 ID
-     * @return 0 登录成功服务层存在EMV文件
-     * 1 登陆失败
-     * 2 登陆成功服务层不存在EMV文件
+     * @return 0 登录成功服务层存在EMV文件  1 登陆失败  2 登陆成功服务层不存在EMV文件
+     *
      */
     @Override
     public int login(Bundle bundle, String bussinessId) throws RemoteException {
@@ -147,7 +147,7 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
      */
     @Override
     public Beeper getBeeper() throws RemoteException {
-        return new BeeperStub(mContext);
+        return BeeperStub.getInstance(mContext);
     }
 
     /**
@@ -157,7 +157,7 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
      */
     @Override
     public LEDDriver getLEDDriver() throws RemoteException {
-        return new LEDDriverStub();
+        return LEDDriverStub.getInstance();
     }
 
     /**
@@ -167,7 +167,7 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
      */
     @Override
     public Printer getPrinter() throws RemoteException {
-        return new PrinterStub();
+        return PrinterStub.getInstance();
     }
 
     /**
@@ -234,7 +234,7 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
      */
     @Override
     public IccCardReader getIccCardReader(int slotNo) throws RemoteException {
-        return new IccCardReaderStub();
+        return IccCardReaderStub.getInstance(mContext);
     }
 
     /**
@@ -311,10 +311,10 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
     @Override
     public void setIMEStatus(int status) throws RemoteException {
 //        if (status == 0){
-//            KeyboardUtils.showSoftInput(new EditText(context));
+//            KeyboardUtils.showSoftInput(new EditText(mContext));
 //        }
 //        if (status == 1){
-//            KeyboardUtils.hideSoftInput((Activity) context);
+//            KeyboardUtils.hideSoftInput(mContext);
 //        }
     }
 
@@ -408,6 +408,18 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
         }).start();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
