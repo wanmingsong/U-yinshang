@@ -107,9 +107,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
             }
             return -2;
         }
-
         emvListener = listener;
-
         EmvStartProcessParam params = new EmvStartProcessParam();
         params.mTransAmt = Long.parseLong(data.getString(EmvTransDataConstrants.TRANSAMT));
         params.mProcType = data.getInt(EmvTransDataConstrants.PROCTYPE);
@@ -153,53 +151,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
                 }
                 try {
                     listener.onCardHolderInputPin(isOnlinePin, i1);
-
-                    PedVeriAuth.getInstance().open(mContext, 0);
-                    //调用密码键盘
-                    Bundle bundle = new Bundle();
-                    bundle.putString("pan", cardNum);//card number
-                    bundle.putInt("keyID", 1);//索引
-//                    bundle.putInt("pinAlgMode", pinAlgMode);//pin加密类型
-                    bundle.putString("promptString", "请输入联机密码");//tip info
-                    PedVeriAuth.getInstance().listenForPinBlock(bundle, 60 * 1000,
-                            true, true, new com.socsi.aidl.pinpadservice.OperationPinListener() {
-
-                                @Override
-                                public void onInput(int len, int key) {
-                                    Log.e(TAG, "onInput  len:" + len + "  key:" + key);
-
-                                }
-
-                                @Override
-                                public void onError(int errorCode) {
-                                    Log.e(TAG, "onError   errorCode:" + errorCode);
-                                    com.socsi.utils.Log.d("错误码：" + errorCode);
-                                }
-
-                                @Override
-                                public void onConfirm(byte[] data, boolean isNonePin) {
-                                    Log.e(TAG, "onConfirm   data:" + HexUtil.toString(data) + "  isNonePin:" + isNonePin);
-                                    com.socsi.utils.Log.d("密码：" + HexUtil.toString(data));
-                                    pinEncrypt = data;
-                                    if (isNonePin) {
-                                        pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, new byte[]{0x00, 0x00});
-                                    } else {
-                                        pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, data);
-                                    }
-                                }
-
-                                @Override
-                                public void onCancel() {
-                                    Log.e(TAG, "onCancel");
-                                    com.socsi.utils.Log.d("用户取消");
-                                    try {
-                                        listener.onFinish(-8020, null);
-                                    } catch (RemoteException e) {
-                                        e.printStackTrace();
-                                    }
-                                }
-                            });
-                } catch (RemoteException | SDKException e) {
+                } catch (RemoteException e) {
                     e.printStackTrace();
                 }
             }
@@ -1052,16 +1004,75 @@ public class EmvHandlerStub extends EmvHandler.Stub {
     public void onSetConfirmCardNoResponse(final boolean isConfirm) throws RemoteException {
         Log.d("Debug", "ConfirmCardNoResponse:" + isConfirm);
         if (!isConfirm) {
-            confirmHandler.onPanConfirm(-1);
-            Bundle bundle = new Bundle();
             try {
+                confirmHandler.onPanConfirm(1);
+                Bundle bundle = new Bundle();
                 emvListener.onFinish(-8020, bundle);
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
-            return;
+        }else {
+            confirmHandler.onPanConfirm(0);
+
+            PedVeriAuth.getInstance().open(mContext, 0);
+            //调用密码键盘
+            Bundle bundle = new Bundle();
+            bundle.putString("pan", cardNum);//card number
+            bundle.putInt("keyID", 1);//索引
+//            bundle.putString("promptString", "请输入联机密码");//tip info
+            try {
+                PedVeriAuth.getInstance().listenForPinBlock(bundle, 60 * 1000,
+                        true, true, new OperationPinListener() {
+
+                            @Override
+                            public void onInput(int len, int key) {
+                                Log.e(TAG, "onInput  len:" + len + "  key:" + key);
+                                try {
+                                    if (key == 13){
+                                        emvListener.onPinPress((byte) 0x06);
+                                    }else if (key == 24){
+                                        emvListener.onPinPress((byte) 0x18);
+                                    }else {
+                                        emvListener.onPinPress((byte) 0x2A);
+                                    }
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            @Override
+                            public void onError(int errorCode) {
+                                Log.e(TAG, "onError   errorCode:" + errorCode);
+                                com.socsi.utils.Log.e("错误码：" + errorCode);
+                            }
+
+                            @Override
+                            public void onConfirm(byte[] data, boolean isNonePin) {
+                                Log.e(TAG, "onConfirm   data:" + HexUtil.toString(data) + "  isNonePin:" + isNonePin);
+                                com.socsi.utils.Log.d("密码：" + HexUtil.toString(data));
+                                pinEncrypt = data;
+                                if (isNonePin) {
+                                    pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, new byte[]{0x00, 0x00});
+                                } else {
+                                    pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, data);
+                                }
+                            }
+
+                            @Override
+                            public void onCancel() {
+                                Log.e(TAG, "onCancel");
+                                com.socsi.utils.Log.d("用户取消");
+                                try {
+                                    emvListener.onFinish(-8020, null);
+                                } catch (RemoteException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+            } catch (SDKException e) {
+                e.printStackTrace();
+            }
         }
-        confirmHandler.onPanConfirm(0);
     }
 
 
@@ -1091,10 +1102,25 @@ public class EmvHandlerStub extends EmvHandler.Stub {
     @Override
     public void onSetOnlineProcResponse(int retCode, Bundle data) throws RemoteException {
         Log.d("Debug", "onSetOnlineProcResponse" + retCode);
-        String resultCode = data.getString("RejCode");
-        byte[] tlv = data.getByteArray("RecvField55");
+        String resultCode = data.getString("rejCode");
+        byte[] tlv = data.getByteArray("recvField55");
+        String tlvString = null;
+        if (tlv != null && tlv.length > 0) {
+            tlvString =  StringUtil.byte2HexStr(tlv);
+        }
+        Log.d("Debug", "resultCode:" + resultCode+",tlv:"+tlvString);
         try {
-             EmvL2.getInstance(mContext, mContext.getPackageName()).twiceAuthorization(resultCode, StringUtil.byte2HexStr(tlv));
+            TwiceAuthorResult twiceAuthorResult = EmvL2.getInstance(mContext, mContext.getPackageName()).twiceAuthorization(resultCode, tlvString);
+            if ("01".equals(twiceAuthorResult.getStatus())) {
+                Bundle bundle = new Bundle();
+                bundle.putByteArray("scriptResult", StringUtil.hexStr2Bytes(twiceAuthorResult.getTlv()));
+//                bundle.putByteArray("emvLog", );
+//                bundle.putByteArray("ecBalance", );
+                emvListener.onFinish(0,bundle);
+            } else {
+                Bundle bundle = new Bundle();
+                emvListener.onFinish(-8021,bundle);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -12,6 +12,8 @@ import com.blankj.utilcode.utils.EmptyUtils;
 import com.blankj.utilcode.utils.KeyboardUtils;
 import com.socsi.exception.SDKException;
 import com.socsi.smartposapi.emv.emvl2.EMVL2;
+import com.socsi.smartposapi.serialnumber.SerialNumberOperation;
+import com.socsi.smartposapi.serialnumber.TerminalSerialNumberInfo;
 import com.socsi.smartposapi.terminal.TerminalManager;
 import com.ums.upos.uapi.card.cpu.CPUCardHandler;
 import com.ums.upos.uapi.card.cpu.CPUCardHandlerStub;
@@ -77,7 +79,6 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
         if (Integer.parseInt(bussinessId) == 0) {
             return -4;  //参数错
         }
-
         //TODO 需确认两个入参有什么用
         workMode = bundle.getInt("WorkMode", 0);
 
@@ -97,7 +98,6 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
 //            return 0;
 //        }
 //        return 2;
-
         long start = System.currentTimeMillis();
         String capkVersion = EMVL2.getInstance().getCapkCardParamsVersion();
         String contactVersion = EMVL2.getInstance().getContactIcCardParamsVersion();
@@ -131,8 +131,9 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
         bundle.putString(DeviceInfoConstrants.COMMOM_MODEL, "I80");
         bundle.putString(DeviceInfoConstrants.COMMOM_OS_VER, "" + Build.VERSION.SDK_INT);
         try {
-            String sn = TerminalManager.getInstance().getDeviceInfo().getProduceSN();
-            bundle.putString(DeviceInfoConstrants.COMMOM_SN, sn);
+//            String sn = TerminalManager.getInstance().getDeviceInfo().getProduceSN();
+            TerminalSerialNumberInfo terminalSerialNumberInfo = SerialNumberOperation.getInstance().queryTerminalSn(SerialNumberOperation.TERMINAL_MODEL_I80, (byte) 6);
+            bundle.putString(DeviceInfoConstrants.COMMOM_SN, terminalSerialNumberInfo.getSN());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -223,7 +224,7 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
      */
     @Override
     public MagCardReader getMagCardReader() throws RemoteException {
-        return new MagCardReaderStub();
+        return MagCardReaderStub.getInstance();
     }
 
     /**

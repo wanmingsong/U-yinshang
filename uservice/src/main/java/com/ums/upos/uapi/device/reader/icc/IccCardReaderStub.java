@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.RemoteException;
 import android.widget.Toast;
 
+import com.socsi.exception.SDKException;
 import com.socsi.smartposapi.card.CardReader;
 import com.socsi.smartposapi.card.IcCardSearchCallback;
 import com.socsi.smartposapi.card.MagCardSearchCallback;
@@ -189,6 +190,14 @@ public class IccCardReaderStub extends IccCardReader.Stub {
      */
     @Override
     public boolean isCardExists() throws RemoteException {
+        try {
+            int status = Icc.getInstance().Icc_Ready();
+            if (status == 2) {
+                return true;
+            }
+        } catch (SDKException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 

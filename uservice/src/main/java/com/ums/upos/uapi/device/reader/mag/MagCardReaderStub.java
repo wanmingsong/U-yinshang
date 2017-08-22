@@ -1,5 +1,6 @@
 package com.ums.upos.uapi.device.reader.mag;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.os.RemoteException;
 import com.socsi.command.magcard.CmdMagcard;
@@ -10,6 +11,26 @@ import com.socsi.smartposapi.magcard.CardInfo;
 import com.socsi.smartposapi.magcard.Magcard;
 
 public class MagCardReaderStub extends MagCardReader.Stub {
+    /**
+     * 单例对象
+     */
+    private static volatile MagCardReaderStub magCardReaderStub;
+
+    /**
+     * 获取EmvHandlerStub单例
+     *
+     * @return EmvHandlerStub单例
+     */
+    public static MagCardReaderStub getInstance() {
+        if (magCardReaderStub == null) {
+            synchronized (MagCardReaderStub.class) {
+                if (magCardReaderStub == null) {
+                    magCardReaderStub = new MagCardReaderStub();
+                }
+            }
+        }
+        return magCardReaderStub;
+    }
     /**
      * 寻卡
      * @param listener 磁条读卡器操作监听器

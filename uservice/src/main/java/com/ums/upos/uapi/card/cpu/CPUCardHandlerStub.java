@@ -2,6 +2,10 @@ package com.ums.upos.uapi.card.cpu;
 
 import android.os.RemoteException;
 
+import com.socsi.exception.SDKException;
+import com.socsi.smartposapi.icc.Icc;
+import com.socsi.utils.StringUtil;
+
 public class CPUCardHandlerStub extends CPUCardHandler.Stub {
     /**
      * 模块上电
@@ -11,7 +15,14 @@ public class CPUCardHandlerStub extends CPUCardHandler.Stub {
      */
     @Override
     public boolean setPowerOn(byte[] atr) throws RemoteException {
-        return false;
+        try {
+            byte[] result = Icc.getInstance().init(Icc.INIT_TYEP_IC);
+            System.arraycopy(result, 0, atr, 0, result.length);
+            return true;
+        } catch (SDKException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**
@@ -20,7 +31,11 @@ public class CPUCardHandlerStub extends CPUCardHandler.Stub {
      */
     @Override
     public void setPowerOff() throws RemoteException {
-
+        try {
+            Icc.getInstance().close(Icc.INIT_TYEP_IC);
+        } catch (SDKException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -31,7 +46,13 @@ public class CPUCardHandlerStub extends CPUCardHandler.Stub {
      */
     @Override
     public int exchangeAPDUCmd(APDUCmd cmd) throws RemoteException {
-        return 0;
+        try {
+            byte[] result = Icc.getInstance().IsoCommand(Icc.INIT_TYEP_IC, cmd.getDataIn());
+            return StringUtil.byteToInt(result);
+        } catch (SDKException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     /**
@@ -41,6 +62,14 @@ public class CPUCardHandlerStub extends CPUCardHandler.Stub {
      */
     @Override
     public boolean halt() throws RemoteException {
+        try {
+            int result = Icc.getInstance().Icc_Ready();
+            if (result == 2 || result == 8){
+                return true;
+            }
+        } catch (SDKException e) {
+            e.printStackTrace();
+        }
         return false;
     }
 
@@ -51,6 +80,7 @@ public class CPUCardHandlerStub extends CPUCardHandler.Stub {
      */
     @Override
     public boolean active() throws RemoteException {
-        return false;
+        byte result = Icc.getInstance().checkCardOn((byte) 0x00);
+        return result == 0x02;
     }
 }

@@ -10,7 +10,7 @@ import com.ums.upos.uapi.ServiceResult;
 import java.io.IOException;
 
 public class SerialPortDriverStub extends SerialPortDriver.Stub {
-    private FT311UARTManager uartManager;
+//    private FT311UARTManager uartManager;
     /**
      * 单例对象
      */
@@ -19,8 +19,8 @@ public class SerialPortDriverStub extends SerialPortDriver.Stub {
      * 构造函数
      */
     private SerialPortDriverStub(Context context){
-        uartManager = new FT311UARTManager(context);
-        uartManager.SetConfig();
+//        uartManager = new FT311UARTManager(context);
+//        uartManager.SetConfig();
     }
 
     /**
@@ -48,11 +48,20 @@ public class SerialPortDriverStub extends SerialPortDriver.Stub {
      */
     @Override
     public int connect(String cfg) throws RemoteException {
-        int result = uartManager.ResumeAccessory();
-        if (result == 0){
-            return 0;
+        try {
+            boolean connect = SerialPortManager.getIntance().connect("", 115200);
+            if (connect) {
+                return 0;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return -1;
+//        int result = uartManager.ResumeAccessory();
+//        if (result == 0){
+//            return 0;
+//        }
+//        return -1;
     }
 
     /**
@@ -64,14 +73,27 @@ public class SerialPortDriverStub extends SerialPortDriver.Stub {
      */
     @Override
     public int send(byte[] data, int dataLen) throws RemoteException {
-        if (dataLen <= 0){
+        if (data == null || data.length == 0 || dataLen <= 0){
             return -1;
         }
-        byte result = uartManager.SendData(dataLen, data);
-        if (result == 0x00){
+        if (dataLen > data.length) {
+            return -1;
+        }
+        byte[] finalData = new byte[dataLen];
+        System.arraycopy(data, 0, finalData, 0, dataLen);
+
+        try {
+            SerialPortManager.getIntance().send(finalData);
             return 0;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return -1;
+//        byte result = uartManager.SendData(dataLen, data);
+//        if (result == 0x00){
+//            return 0;
+//        }
+//        return -1;
     }
 
     /**
@@ -88,11 +110,18 @@ public class SerialPortDriverStub extends SerialPortDriver.Stub {
         if (recvLen <= 0){
             return -1;
         }
-        byte result = uartManager.ReadData(recvLen, buffer, new int[1]);
-        if (result == 0x00){
-            return 0;
+        try {
+            int recv = SerialPortManager.getIntance().recv(buffer, recvLen, timeout);
+            return recv;
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         return -1;
+//        byte result = uartManager.ReadData(recvLen, buffer, new int[1]);
+//        if (result == 0x00){
+//            return 0;
+//        }
+//        return -1;
     }
 
     /**
@@ -102,8 +131,14 @@ public class SerialPortDriverStub extends SerialPortDriver.Stub {
      */
     @Override
     public int disconnect() throws RemoteException {
-        uartManager.DestroyAccessory();
-        return 0;
+        boolean disConnect = SerialPortManager.getIntance().disConnect();
+        if (disConnect) {
+            return 0;
+        } else {
+            return -4999;
+        }
+//        uartManager.DestroyAccessory();
+//        return 0;
     }
 
     /**

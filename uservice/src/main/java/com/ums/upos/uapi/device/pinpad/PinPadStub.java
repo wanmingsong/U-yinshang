@@ -17,7 +17,7 @@ import com.socsi.utils.StringUtil;
 public class PinPadStub extends PinPad.Stub {
     private Context mContex;
     public static final String TAG = "PinPadStub";
-    private int mTimeout = 60 * 1000;
+    private int mTimeout = 10 * 1000;
     /**
      * 单例对象
      */
@@ -55,6 +55,7 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public int initPinPad(int type) throws RemoteException {
+        Log.d("WY", "initPinPad");
         //TODO 内置外置键盘初始化？
         if (type == PinPadType.INTERNAL) {
             //内置键盘
@@ -82,6 +83,7 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public int loadPlainMKey(int mKeyIdx, byte[] keyData, int keyDataLen, boolean isTmsKey) throws RemoteException {
+        Log.d("WY", "loadPlainMKey");
         //TODO decMKeyIdx解密密钥索引参数如何填
         //TODO 主密钥长度错
         if (keyData == null) {
@@ -547,7 +549,7 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public boolean deleteMKey(int mKeyIdx) throws RemoteException {
-        if (mKeyIdx < 1 || mKeyIdx > 100){
+        if (mKeyIdx < 1 || mKeyIdx > 100) {
             return false;
         }
         try {
@@ -600,7 +602,6 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public int inputText(final OnPinPadInputListener listener, int mode) throws RemoteException {
-
         return 0;
     }
 
@@ -616,17 +617,20 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public int inputOnlinePin(byte[] panBlock, int mKeyId, int pinAlgMode, final OnPinPadInputListener listener) throws RemoteException {
+        Log.d("WY", "inputOnlinePin");
         if (listener == null || panBlock == null) {
             return -2;
         }
         if (mKeyId < 1 || mKeyId > 100) {
             return -7012;
         }
+
         Bundle bundle = new Bundle();
-        bundle.putString("pan", StringUtil.byte2HexStr(panBlock));//card number
+        bundle.putString("pan", StringUtil.byteToStr(panBlock));//card number
         bundle.putInt("keyID", mKeyId);//索引
-        bundle.putInt("pinAlgMode", pinAlgMode);//pin加密类型
-        bundle.putString("promptString", "请输入联机密码");//tip info
+//        bundle.putString("lineIndex_2", "输入密码提示");//索引
+//        bundle.putInt("pinAlgMode", pinAlgMode);//pin加密类型
+//        bundle.putString("promptString", "请输入联机密码");//tip info
         try {
             int res = PedVeriAuth.getInstance().listenForPinBlock(bundle, mTimeout,
                     true, true, new com.socsi.aidl.pinpadservice.OperationPinListener() {
@@ -636,7 +640,13 @@ public class PinPadStub extends PinPad.Stub {
                             Log.e(TAG, "onInput  len:" + len + "  key:" + key);
                             try {
                                 isInput = true;
-                                listener.onSendKey((byte) 0x2A);
+                                if (key == 13){
+                                    listener.onSendKey((byte) 0x06);
+                                }else if (key == 24){
+                                    listener.onSendKey((byte) 0x18);
+                                }else {
+                                    listener.onSendKey((byte) 0x2A);
+                                }
                             } catch (RemoteException e) {
                                 e.printStackTrace();
                             }
@@ -685,6 +695,7 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public boolean isInputting() throws RemoteException {
+        Log.d("WY", "isInputting：" + isInput);
         return isInput;
     }
 
@@ -719,7 +730,7 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public void ppDispText(String text, int lineNo) throws RemoteException {
-
+        PedVeriAuth.getInstance().showText(lineNo, text);
     }
 
     /**
@@ -730,7 +741,7 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public void ppScrClr(int lineNo) throws RemoteException {
-
+        PedVeriAuth.getInstance().clearText();
     }
 
     /**
@@ -741,7 +752,17 @@ public class PinPadStub extends PinPad.Stub {
      */
     @Override
     public void setSupportPinLen(int[] pinLen) throws RemoteException {
-
+        int i, min, max;
+        min = max = pinLen[0];
+        System.out.print("数组A的元素包括：");
+        for (i = 0; i < pinLen.length; i++) {
+            System.out.print(pinLen[i] + " ");
+            if (pinLen[i] > max)   // 判断最大值
+                max = pinLen[i];
+            if (pinLen[i] < min)   // 判断最小值
+                min = pinLen[i];
+        }
+        PedVeriAuth.getInstance().setPINLength(min, max);
     }
 
     /**
