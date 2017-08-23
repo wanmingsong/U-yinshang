@@ -235,7 +235,11 @@ public class DeviceServiceEngineStub extends DeviceServiceEngine.Stub {
      */
     @Override
     public IccCardReader getIccCardReader(int slotNo) throws RemoteException {
-        return IccCardReaderStub.getInstance(mContext);
+        if (slotNo ==1 || slotNo ==7) {
+            return new IccCardReaderStub(mContext, slotNo);
+        } else {
+            return null;
+        }
     }
 
     /**

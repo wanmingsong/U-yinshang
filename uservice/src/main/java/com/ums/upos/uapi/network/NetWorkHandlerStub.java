@@ -20,7 +20,7 @@ public class NetWorkHandlerStub extends NetWorkHandler.Stub {
         //TODO 根据实际传入的值来分析
         int networkType = bundle.getInt(NetWorkParams.COMMON_NETWORKTYPE, -1);
         if (networkType > NetWorkType.LAN && networkType <= NetWorkType.WIFI) {
-
+            NetworkUtils.setWifiEnabled(true);
         }
         String wifiSSID = bundle.getString(NetWorkParams.WIFI_SSID, "");
         if (wifiSSID.length() > 0) {

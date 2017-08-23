@@ -3,6 +3,7 @@ package com.ums.upos.uapi.device.reader.icc;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.socsi.exception.SDKException;
@@ -16,14 +17,16 @@ import com.ums.upos.uapi.emv.OnEmvProcessListener;
 
 public class IccCardReaderStub extends IccCardReader.Stub {
     private Context mContext;
-
+    private int mSlot;
     /**
      * 单例对象
      */
-    private static volatile IccCardReaderStub iccCardReaderStub;
+//    private static volatile IccCardReaderStub iccCardReaderStub;
 
-    private IccCardReaderStub(Context context) {
+    public IccCardReaderStub(Context context, int slot) {
         this.mContext = context;
+        mSlot = slot;
+        Log.e("Icc", "slot:"+slot);
     }
     /**
      * 获取IccCardReaderStub单例
@@ -31,16 +34,17 @@ public class IccCardReaderStub extends IccCardReader.Stub {
      * @param context 上下文
      * @return EmvHandlerStub单例
      */
-    public static IccCardReaderStub getInstance(Context context) {
-        if (iccCardReaderStub == null) {
-            synchronized (IccCardReaderStub.class) {
-                if (iccCardReaderStub == null) {
-                    iccCardReaderStub = new IccCardReaderStub(context);
-                }
-            }
-        }
-        return iccCardReaderStub;
-    }
+//    public static IccCardReaderStub getInstance(Context context, int slot) {
+//        if (iccCardReaderStub == null) {
+//            synchronized (IccCardReaderStub.class) {
+//                if (iccCardReaderStub == null) {
+//                    iccCardReaderStub = new IccCardReaderStub(context);
+//                }
+//            }
+//        }
+//        mSlot = slot;
+//        return iccCardReaderStub;
+//    }
     /**
      * 寻卡
      *
@@ -60,52 +64,53 @@ public class IccCardReaderStub extends IccCardReader.Stub {
             listener.onSearchResult(-2, bundle);
             return -2;
         }
-        CardReader cardReader = CardReader.getInstance();
-        IcCardSearchCallback icCardSearchCallback = new IcCardSearchCallback() {
-            @Override
-            public void onSearchResult(int i) {
-                try {
-                    switch (i) {
-                        case CardReader.SUCCESS:
-                            String mCardType = "";
-                            for (String type:cardType){
-                                if (type.equals("CPUCARD")){
-                                    mCardType = IccCardType.CPUCARD;
-                                }
-                            }
 
-                            if (mCardType.equals("CPUCARD")){
-                                Bundle bundle = new Bundle();
-                                bundle.putString("CardType", IccCardType.CPUCARD);
-                                bundle.putByteArray("m1_sn", null);
-                                listener.onSearchResult(0, bundle);
-                            }else {
-                                Bundle bundle = new Bundle();
-                                listener.onSearchResult(-6001, bundle);
-                            }
-                            break;
-                        case CardReader.OVERTIME:
-                            Bundle bundle = new Bundle();
-                            listener.onSearchResult(-3, bundle);
-                            break;
-                        case 2:
-                            //卡片已插入但是未知卡片类型
-                            Bundle bundle2 = new Bundle();
-                            listener.onSearchResult(-6001, bundle2);
-                            break;
-                        case CardReader.FAIL:
-                            //TODO 传一个空的bundle？
-                            Bundle bundle3 = new Bundle();
-                            listener.onSearchResult(-2, bundle3);
-                            break;
-                        default:
-                            break;
-                    }
-                } catch (RemoteException e) {
-                    e.printStackTrace();
-                }
-            }
-        };
+        CardReader cardReader = CardReader.getInstance();
+//        IcCardSearchCallback icCardSearchCallback = new IcCardSearchCallback() {
+//            @Override
+//            public void onSearchResult(int i) {
+//                try {
+//                    switch (i) {
+//                        case CardReader.SUCCESS:
+//                            String mCardType = "";
+//                            for (String type:cardType){
+//                                if (type.equals("CPUCARD")){
+//                                    mCardType = IccCardType.CPUCARD;
+//                                }
+//                            }
+//
+//                            if (mCardType.equals("CPUCARD")){
+//                                Bundle bundle = new Bundle();
+//                                bundle.putString("CardType", IccCardType.CPUCARD);
+//                                bundle.putByteArray("m1_sn", null);
+//                                listener.onSearchResult(0, bundle);
+//                            }else {
+//                                Bundle bundle = new Bundle();
+//                                listener.onSearchResult(-6001, bundle);
+//                            }
+//                            break;
+//                        case CardReader.OVERTIME:
+//                            Bundle bundle = new Bundle();
+//                            listener.onSearchResult(-3, bundle);
+//                            break;
+//                        case 2:
+//                            //卡片已插入但是未知卡片类型
+//                            Bundle bundle2 = new Bundle();
+//                            listener.onSearchResult(-6001, bundle2);
+//                            break;
+//                        case CardReader.FAIL:
+//                            //TODO 传一个空的bundle？
+//                            Bundle bundle3 = new Bundle();
+//                            listener.onSearchResult(-2, bundle3);
+//                            break;
+//                        default:
+//                            break;
+//                    }
+//                } catch (RemoteException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        };
 
         RfSearchCallback rfSearchCallback = new RfSearchCallback() {
             @Override
@@ -127,15 +132,18 @@ public class IccCardReaderStub extends IccCardReader.Stub {
 
                             if (i1 == 0xff){
                                 Bundle bundle = new Bundle();
+                                //Log.e("Icc", "-6001");
                                 listener.onSearchResult(-6001, bundle);
                             } else if (i1 == 0x44) {
                                 if (m1Card.equals("M1CARD")) {
                                     Bundle bundle = new Bundle();
                                     bundle.putString("CardType", IccCardType.M1CARD);
                                     bundle.putByteArray("m1_sn", bytes);
+                                    //Log.e("Icc", "0");
                                     listener.onSearchResult(0, bundle);
                                 }else {
                                     Bundle bundle = new Bundle();
+                                    //Log.e("Icc", "-6001 1");
                                     listener.onSearchResult(-6001, bundle);
                                 }
                             }else {
@@ -143,19 +151,23 @@ public class IccCardReaderStub extends IccCardReader.Stub {
                                     Bundle bundle = new Bundle();
                                     bundle.putString("CardType", "CPUCARD");
                                     bundle.putByteArray("m1_sn", null);
+//                                    Log.e("Icc", "0 1:"+mSlot);
                                     listener.onSearchResult(0, bundle);
                                 } else {
                                     Bundle bundle = new Bundle();
+                                    //Log.e("Icc", "-6001 2");
                                     listener.onSearchResult(-6001, bundle);
                                 }
                             }
                             break;
                         case 1:
                             Bundle bundle = new Bundle();
+                            //Log.e("Icc", "-3");
                             listener.onSearchResult(-3, bundle);//超时
                             break;
                         case -1:
                             Bundle bundle2 = new Bundle();
+                            //Log.e("Icc", "-2");
                             listener.onSearchResult(-2, bundle2);//异常错误
                             break;
                         default:
@@ -166,9 +178,11 @@ public class IccCardReaderStub extends IccCardReader.Stub {
                 }
             }
         };
-        cardReader.setIcCardSearchCallback(icCardSearchCallback);
-        cardReader.setRfSearchCallback(rfSearchCallback);
-        cardReader.searchCard(6, timeout);
+//        cardReader.setIcCardSearchCallback(icCardSearchCallback);
+        if (mSlot == 7) {
+            cardReader.setRfSearchCallback(rfSearchCallback);
+            cardReader.searchCard(4, timeout);
+        }
         return 0;
     }
 

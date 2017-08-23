@@ -3,10 +3,8 @@ package com.ums.upos.uapi.device.serialport;
 import android.content.Context;
 import android.hardware.usb.UsbAccessory;
 import android.os.RemoteException;
-
 import com.socsi.smartposapi.device.serialport.SerialPortManager;
 import com.ums.upos.uapi.ServiceResult;
-
 import java.io.IOException;
 
 public class SerialPortDriverStub extends SerialPortDriver.Stub {

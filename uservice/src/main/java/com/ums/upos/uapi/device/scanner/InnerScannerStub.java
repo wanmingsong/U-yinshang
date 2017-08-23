@@ -2,6 +2,7 @@ package com.ums.upos.uapi.device.scanner;
 
 import android.content.Context;
 import android.content.Intent;
+import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.util.Log;

@@ -130,6 +130,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
                 try {
                     String panNum = StringUtil.byte2HexStr(bytes).replace("F", "");
                     cardNum = panNum;
+//                    com.socsi.utils.Log.d("panNum:"+panNum);
                     listener.onConfirmCardNo(panNum);
                 } catch (RemoteException e) {
                     e.printStackTrace();
@@ -140,7 +141,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
             public void getPin(int i, int i1, EmvL2.GetPinHandler getPinHandler) {
                 com.socsi.utils.Log.d("EMVDevice process startProcess getPin");
                 pinHandler = getPinHandler;
-                Log.d("pinHandler", "EMVDevice SyncEmvCallback getPin type error:" + pinHandler);
+//                Log.d("pinHandler", "EMVDevice SyncEmvCallback getPin type error:" + pinHandler);
                 boolean isOnlinePin = true;
                 if (i == EmvCallback.EMV_ONLINEPIN || i == EmvCallback.EMV_EC_ONLINEPIN) {
                     isOnlinePin = true;
@@ -254,51 +255,84 @@ public class EmvHandlerStub extends EmvHandler.Stub {
 
             @Override
             public void processResult(int i) {
-                com.socsi.utils.Log.d("EMVDevice process startProcess processResult");
-                String desc = "";
-                switch (i) {
-                    case EmvApi.EMV_TRANS_FALLBACK:
-                        desc = "Fallback";
-                        break;
-                    case EmvApi.EMV_TRANS_TERMINATE:
-                        desc = "交易中止";
-                        break;
-                    case EmvApi.EMV_TRANS_ACCEPT:
-                        desc = "交易授受";
-                        break;
-                    case EmvApi.EMV_TRANS_DENIAL:
-                        desc = "交易拒绝";
-                        break;
-                    case EmvApi.EMV_TRANS_GOONLINE:
-                        desc = "联机";
-                        break;
-                    case EmvApi.EMV_TRANS_QPBOC_ACCEPT:
-                        desc = "非接触QPBOC交易接受";
-                        break;
-                    case EmvApi.EMV_TRANS_QPBOC_DENIAL:
-                        desc = "非接触QPBOC交易拒绝";
-                        break;
-                    case EmvApi.EMV_TRANS_QPBOC_GOONLINE:
-                        desc = "非接触QPBOC交易联机";
-                        break;
-                    case EmvErrorCode.EMV_ERR_BASE:
-                        if (data.getInt(EmvTransDataConstrants.PROCTYPE) == EmvTransFlow.SIMPLE) {
-                            desc = "简易流程成功";
-                        }
-                        break;
-                    default:
-                        break;
-                }
+                com.socsi.utils.Log.d("EMVDevice process startProcess processResult:"+i);
+//                String desc = "";
+//                switch (i) {
+//                    case EmvApi.EMV_TRANS_FALLBACK:
+//                        desc = "Fallback";
+//                        break;
+//                    case EmvApi.EMV_TRANS_TERMINATE:
+//                        desc = "交易中止";
+//                        break;
+//                    case EmvApi.EMV_TRANS_ACCEPT:
+//                        desc = "交易授受";
+//                        break;
+//                    case EmvApi.EMV_TRANS_DENIAL:
+//                        desc = "交易拒绝";
+//                        break;
+//                    case EmvApi.EMV_TRANS_GOONLINE:
+//                        desc = "联机";
+//                        break;
+//                    case EmvApi.EMV_TRANS_QPBOC_ACCEPT:
+//                        desc = "非接触QPBOC交易接受";
+//                        break;
+//                    case EmvApi.EMV_TRANS_QPBOC_DENIAL:
+//                        desc = "非接触QPBOC交易拒绝";
+//                        break;
+//                    case EmvApi.EMV_TRANS_QPBOC_GOONLINE:
+//                        desc = "非接触QPBOC交易联机";
+//                        break;
+//                    case EmvErrorCode.EMV_ERR_BASE:
+//                        if (data.getInt(EmvTransDataConstrants.PROCTYPE) == EmvTransFlow.SIMPLE) {
+//                            desc = "简易流程成功";
+//                        }
+//                        break;
+//                    default:
+//                        break;
+//                }
 
                 //打印返回值
-                com.socsi.utils.Log.d(desc);
+//                com.socsi.utils.Log.d(desc);
+
+                if (i == EmvApi.EMV_TRANS_QPBOC_ACCEPT) {
+                    Bundle bundle = new Bundle();
+                    try {
+                        listener.onFinish(-8002, bundle);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+                if (i == EmvApi.EMV_TRANS_QPBOC_GOONLINE ) {
+                    Bundle bundle = new Bundle();
+                    try {
+                        listener.onFinish(-8003, bundle);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
                 /**
                  * IC卡交易时，获得交易所需数据,卡序列号
                  */
-                Map<String, String> map = new HashMap<String, String>();
-                byte[] cardData = Utility.getTlvData(mContext, mContext.getPackageName(), "5F34");
-                Map<String, String> cardDataMap = TlvUtil.tlvToMap(cardData);
-                String sn = cardDataMap.get("5F34");//23卡序列号
+//                Map<String, String> map = new HashMap<String, String>();
+                byte[] cardData = EmvL2.getInstance(mContext, mContext.getPackageName()).getTag(StringUtil.hexStr2Bytes("5F34"), 1);
+//                byte[] cardData = Utility.getTlvData(mContext, mContext.getPackageName(), "5F34");
+//                Map<String, String> cardDataMap = TlvUtil.tlvToMap(cardData);
+//                String sn = cardDataMap.get("5F34");//23卡序列号
+                Map<String, String> tlvToMap = TlvUtil.tlvToMap(cardData);
+                String sn = tlvToMap.get("5F34");
+                if (sn ==  null) {
+                    try {
+                        listener.onFinish(-2, new Bundle());
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+                if (sn.length() % 2 == 1) {
+                    sn = "0"+sn;
+                }
                 com.socsi.utils.Log.d("sn---------" + sn);
 
                 Bundle bundle = new Bundle();
@@ -344,6 +378,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
 //            config.setTransCurrCode(cfg.getByteArray(EmvTermCfgConstrants.));
 //            config.setTransCurrExp(cfg.getInt(EmvTermCfgConstrants.));
         EmvL2.getInstance(mContext, mContext.getPackageName()).setTermConfig(config);
+        //com.socsi.utils.Log.d("initTermConfig");
         return 0;
     }
 
@@ -386,6 +421,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
         if (result != 0) {
             return -1;
         }
+        //com.socsi.utils.Log.d("setAidParaList");
         return 0;
     }
 
@@ -489,6 +525,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
         if (result != 0) {
             return -1;
         }
+        //com.socsi.utils.Log.d("setCAPKList");
         return 0;
     }
 
@@ -542,6 +579,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
      */
     @Override
     public List<EmvCapk> getCapkList() throws RemoteException {
+        //Log.e("WY", "getCapkList");
         List<byte[]> emvCapks = EmvL2.getInstance(mContext, mContext.getPackageName()).getCapks();
         if (emvCapks != null) {
             List<EmvCapk> emvCapkList = new ArrayList<>();
@@ -597,6 +635,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
      */
     @Override
     public List<EmvAidPara> getAidParaList() throws RemoteException {
+        //Log.e("WY", "getAidParaList");
         List<byte[]> emvAids = EmvL2.getInstance(mContext, mContext.getPackageName()).getAids();
         if (emvAids != null) {
             List<EmvAidPara> emvAidParaList = new ArrayList<>();
@@ -1014,64 +1053,64 @@ public class EmvHandlerStub extends EmvHandler.Stub {
         }else {
             confirmHandler.onPanConfirm(0);
 
-            PedVeriAuth.getInstance().open(mContext, 0);
-            //调用密码键盘
-            Bundle bundle = new Bundle();
-            bundle.putString("pan", cardNum);//card number
-            bundle.putInt("keyID", 1);//索引
-//            bundle.putString("promptString", "请输入联机密码");//tip info
-            try {
-                PedVeriAuth.getInstance().listenForPinBlock(bundle, 60 * 1000,
-                        true, true, new OperationPinListener() {
-
-                            @Override
-                            public void onInput(int len, int key) {
-                                Log.e(TAG, "onInput  len:" + len + "  key:" + key);
-                                try {
-                                    if (key == 13){
-                                        emvListener.onPinPress((byte) 0x06);
-                                    }else if (key == 24){
-                                        emvListener.onPinPress((byte) 0x18);
-                                    }else {
-                                        emvListener.onPinPress((byte) 0x2A);
-                                    }
-                                } catch (RemoteException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-
-                            @Override
-                            public void onError(int errorCode) {
-                                Log.e(TAG, "onError   errorCode:" + errorCode);
-                                com.socsi.utils.Log.e("错误码：" + errorCode);
-                            }
-
-                            @Override
-                            public void onConfirm(byte[] data, boolean isNonePin) {
-                                Log.e(TAG, "onConfirm   data:" + HexUtil.toString(data) + "  isNonePin:" + isNonePin);
-                                com.socsi.utils.Log.d("密码：" + HexUtil.toString(data));
-                                pinEncrypt = data;
-                                if (isNonePin) {
-                                    pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, new byte[]{0x00, 0x00});
-                                } else {
-                                    pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, data);
-                                }
-                            }
-
-                            @Override
-                            public void onCancel() {
-                                Log.e(TAG, "onCancel");
-                                com.socsi.utils.Log.d("用户取消");
-                                try {
-                                    emvListener.onFinish(-8020, null);
-                                } catch (RemoteException e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
-            } catch (SDKException e) {
-                e.printStackTrace();
-            }
+//            PedVeriAuth.getInstance().open(mContext, 0);
+//            //调用密码键盘
+//            Bundle bundle = new Bundle();
+//            bundle.putString("pan", cardNum);//card number
+//            bundle.putInt("keyID", 1);//索引
+////            bundle.putString("promptString", "请输入联机密码");//tip info
+//            try {
+//                PedVeriAuth.getInstance().listenForPinBlock(bundle, 60 * 1000,
+//                        true, true, new OperationPinListener() {
+//
+//                            @Override
+//                            public void onInput(int len, int key) {
+//                                Log.e(TAG, "onInput  len:" + len + "  key:" + key);
+//                                try {
+//                                    if (key == 13){
+//                                        emvListener.onPinPress((byte) 0x06);
+//                                    }else if (key == 24){
+//                                        emvListener.onPinPress((byte) 0x18);
+//                                    }else {
+//                                        emvListener.onPinPress((byte) 0x2A);
+//                                    }
+//                                } catch (RemoteException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//
+//                            @Override
+//                            public void onError(int errorCode) {
+//                                Log.e(TAG, "onError   errorCode:" + errorCode);
+//                                com.socsi.utils.Log.e("错误码：" + errorCode);
+//                            }
+//
+//                            @Override
+//                            public void onConfirm(byte[] data, boolean isNonePin) {
+//                                Log.e(TAG, "onConfirm   data:" + HexUtil.toString(data) + "  isNonePin:" + isNonePin);
+//                                com.socsi.utils.Log.d("密码：" + HexUtil.toString(data));
+//                                pinEncrypt = data;
+//                                if (isNonePin) {
+//                                    pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, new byte[]{0x00, 0x00});
+//                                } else {
+//                                    pinHandler.onGetPin(EmvCallbackGetPinResult.CV_PIN_SUCC, data);
+//                                }
+//                            }
+//
+//                            @Override
+//                            public void onCancel() {
+//                                Log.e(TAG, "onCancel");
+//                                com.socsi.utils.Log.d("用户取消");
+//                                try {
+//                                    emvListener.onFinish(-8020, null);
+//                                } catch (RemoteException e) {
+//                                    e.printStackTrace();
+//                                }
+//                            }
+//                        });
+//            } catch (SDKException e) {
+//                e.printStackTrace();
+//            }
         }
     }
 
@@ -1104,7 +1143,7 @@ public class EmvHandlerStub extends EmvHandler.Stub {
         Log.d("Debug", "onSetOnlineProcResponse" + retCode);
         String resultCode = data.getString("rejCode");
         byte[] tlv = data.getByteArray("recvField55");
-        String tlvString = null;
+        String tlvString = "";
         if (tlv != null && tlv.length > 0) {
             tlvString =  StringUtil.byte2HexStr(tlv);
         }
